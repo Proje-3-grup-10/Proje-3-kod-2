@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageOps
 import ayarlar as opt
 
 class BulmacaArayuz:
@@ -19,7 +19,7 @@ class BulmacaArayuz:
             self.pencere.destroy()
             return
         
-        tam_resim = Image.open(yol).resize((opt.PENCERE_BOYUTU, opt.PENCERE_BOYUTU))
+        tam_resim = ImageOps.fit(Image.open(yol),(opt.PENCERE_BOYUTU, opt.PENCERE_BOYUTU), centering=(0.5, 0.5))
         
         # Resmi 3x3 parçaya böl
         kırpılan_parçalar = []
