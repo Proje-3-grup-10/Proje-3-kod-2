@@ -1,17 +1,23 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageOps
 import ayarlar as opt
 
 class BulmacaArayuz:
-    def __init__(self, pencere, motor):
+    def __init__(self, pencere, motor, mod):
         self.pencere = pencere
         self.motor = motor
+        self.mod=mod
         self.parcalar = {} # 1-8 arasındaki parçaların resimlerini tutar
         self.son_parca_gorseli = None # Sağ alt köşe parçası, kazanılınca gösterilecek
         self.bos_gorsel = None # Oyun sırasında boş hücre için kullanılacak görsel
         self.butonlar = [] # Buton nesnelerini tutar
-        self.resim_sec_ve_hazirla()
+
+        if self.mod=="resim":
+            self.resim_sec_ve_hazirla()
+        else:
+            self.pencere.geometry(f"{opt.PENCERE_BOYUTU}x{opt.PENCERE_BOYUTU}")
+            self.butonlari_olustur()
 
     def resim_sec_ve_hazirla(self):
         yol = filedialog.askopenfilename(filetypes=[("Resim Dosyaları", "*.jpg *.png *.jpeg")])
@@ -19,7 +25,7 @@ class BulmacaArayuz:
             self.pencere.destroy()
             return
         
-        tam_resim = Image.open(yol).resize((opt.PENCERE_BOYUTU, opt.PENCERE_BOYUTU))
+        tam_resim = ImageOps.fit(Image.open(yol),(opt.PENCERE_BOYUTU, opt.PENCERE_BOYUTU), centering=(0.5, 0.5))
         
         # Resmi 3x3 parçaya böl
         kırpılan_parçalar = []
