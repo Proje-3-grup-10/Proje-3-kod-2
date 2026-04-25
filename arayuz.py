@@ -7,13 +7,13 @@ class BulmacaArayuz:
     def __init__(self, pencere, motor, mod):
         self.pencere = pencere
         self.motor = motor
-        self.mod=mod
+        self.mod = mod
         self.parcalar = {} # 1-8 arasındaki parçaların resimlerini tutar
         self.son_parca_gorseli = None # Sağ alt köşe parçası, kazanılınca gösterilecek
         self.bos_gorsel = None # Oyun sırasında boş hücre için kullanılacak görsel
         self.butonlar = [] # Buton nesnelerini tutar
-
-        if self.mod=="resim":
+        
+        if self.mod == "resim":
             self.resim_sec_ve_hazirla()
         else:
             self.pencere.geometry(f"{opt.PENCERE_BOYUTU}x{opt.PENCERE_BOYUTU}")
@@ -25,7 +25,8 @@ class BulmacaArayuz:
             self.pencere.destroy()
             return
         
-        tam_resim = ImageOps.fit(Image.open(yol),(opt.PENCERE_BOYUTU, opt.PENCERE_BOYUTU), centering=(0.5, 0.5))
+        img_orjinal = Image.open(yol)
+        tam_resim = ImageOps.fit(img_orjinal, (opt.PENCERE_BOYUTU, opt.PENCERE_BOYUTU), centering=(0.5, 0.5))
         
         # Resmi 3x3 parçaya böl
         kırpılan_parçalar = []
@@ -56,32 +57,56 @@ class BulmacaArayuz:
         self.butonlari_olustur()
 
     def butonlari_olustur(self):
+        if self.mod == "sayi":
+            # Soft ve sıcak krem arka plan
+            self.pencere.config(bg="#FFF6F4") 
+
         for r in range(opt.BOYUT):
             satir_btns = []
             for c in range(opt.BOYUT):
-                # Butonların kenarlıklarını minimal tutarak parçalar arasındaki geçişi iyileştir
                 btn = tk.Button(self.pencere, relief="flat", borderwidth=1,
                                command=lambda r=r, c=c: self.tikla(r, c))
-                btn.grid(row=r, column=c)
+                
+                if self.mod == "sayi":
+                    btn.config(font=("Helvetica", 32, "bold"), 
+                               bg="#FFB7B2", fg="#4A403A", 
+                               activebackground="#FF9E99")
+
+                btn.grid(row=r, column=c, padx=4, pady=4)
                 satir_btns.append(btn)
             self.butonlar.append(satir_btns)
+
+        if self.mod == "sayi":
+            for i in range(opt.BOYUT):
+                self.pencere.grid_rowconfigure(i, weight=1)
+                self.pencere.grid_columnconfigure(i, weight=1)
+
         self.guncelle()
 
     def guncelle(self):
         for r in range(opt.BOYUT):
             for c in range(opt.BOYUT):
                 deger = self.motor.tahta[r][c]
-                # Eğer hücre boşsa (motorun tahtasında 0 ise)
-                if deger == 0:
-                    # Oyun kazanıldıysa, bu boş hücreyi saklanan son parça ile doldur
-                    if self.motor.kazandi_mi() and r == (opt.BOYUT - 1) and c == (opt.BOYUT - 1):
-                        self.butonlar[r][c].config(image=self.son_parca_gorseli)
-                    # Oyun devam ediyorsa, boş slot görselini göster
+                
+                if self.mod == "resim":
+                    # Eğer hücre boşsa (motorun tahtasında 0 ise)
+                    if deger == 0:
+                        # Oyun kazanıldıysa, bu boş hücreyi saklanan son parça ile doldur
+                        if self.motor.kazandi_mi() and r == (opt.BOYUT - 1) and c == (opt.BOYUT - 1):
+                            self.butonlar[r][c].config(image=self.son_parca_gorseli)
+                        # Oyun devam ediyorsa, boş slot görselini göster
+                        else:
+                            self.butonlar[r][c].config(image=self.bos_gorsel)
+                    # Diğer durumlarda (1..8 parçaları), parçanın kendi resmini göster
                     else:
-                        self.butonlar[r][c].config(image=self.bos_gorsel)
-                # Diğer durumlarda (1..8 parçaları), parçanın kendi resmini göster
+                        self.butonlar[r][c].config(image=self.parcalar[deger])
                 else:
-                    self.butonlar[r][c].config(image=self.parcalar[deger])
+                    if deger == 0:
+                        # Boş hücrenin yerini belli etmek için soft vizon rengi ve çukur (sunken) efekti
+                        self.butonlar[r][c].config(text="", bg="#EADBD8", image="", relief="sunken", borderwidth=2) 
+                    else:
+                        # Rakam hücrelerini Pastel Pembe arka plan ve Acı Kahve yazı yap (hafif havada dursun)
+                        self.butonlar[r][c].config(text=str(deger), bg="#FFB7B2", fg="#4A403A", image="", relief="flat", borderwidth=1)
 
     def tikla(self, r, c):
         if self.motor.hareket_et(r, c):
